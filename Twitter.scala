@@ -66,7 +66,8 @@ val nlpProps = {
 }  
 
     
-    System.setProperty("twitter4j.oauth.consumerKey", "hO73NTZg4uzAyJZmsAzNKPxNz")
+    //Setting twitter4j properties
+	System.setProperty("twitter4j.oauth.consumerKey", "hO73NTZg4uzAyJZmsAzNKPxNz")
     System.setProperty("twitter4j.oauth.consumerSecret", "iPq0MRFKcundVko0Yo1vsuAGRuNNeO3M7BIpgQx26E6JUN13m9")
     System.setProperty("twitter4j.oauth.accessToken", "782639803737120768-25gaXVXedFSbYnYm1DjopGUJRtydbNW")
     System.setProperty("twitter4j.oauth.accessTokenSecret", "5vWFwbLtIe8gOJUWkA1q3YZbaLw0VapcwGH6bTFTMwHRG")
@@ -74,10 +75,12 @@ val nlpProps = {
 
      @transient val ssc = new StreamingContext(sc, Seconds(30))
   
-     @transient  val stream = TwitterUtils.createStream(ssc, None)
+     //Creating a twitter stream
+	 @transient  val stream = TwitterUtils.createStream(ssc, None)
 
-     @transient val tweets = stream.filter { status =>
-        status.getLang() == "en" && CharMatcher.ASCII.matchesAllOf(status.getText) && status.getText().toLowerCase().contains("#trump")
+     //Filtering tweets by removing emojis and special characters. Also removing tweets from all languages other than English.
+	 @transient val tweets = stream.filter { status =>
+        status.getLang() == "en" && CharMatcher.ASCII.matchesAllOf(status.getText)
 }
 
      @transient val hashTagStream = tweets.map(x=>(x.getText))
@@ -95,15 +98,15 @@ val nlpProps = {
 	val results = client.lookup(t.getUser.getLocation)
 	val location1 = results.head.geometry.location
 
-	//println(s"Latitude: ${location1.latitude}, Longitude: ${location1.longitude}")
 
         Map(
-           "location" -> Option(location1).map(geo => { s"${geo.latitude},${geo.longitude}" }),
-           "text" -> t.getText,
+			"location" -> Option(location1).map(geo => { s"${geo.latitude},${geo.longitude}" }),
+			"text" -> t.getText,
             "HashTags" -> t.getText.split(" ").filter(_.startsWith("#")).mkString(" "),   
-	   "sentiment" -> detectSentiment(t.getText)
+			"sentiment" -> detectSentiment(t.getText)
          )
        }).saveToEs("shark/tweets")
+	   //saveToEs saves the data to elasticsearch using shark as the index
 } 
     // Let's start the stream
     ssc.start()
